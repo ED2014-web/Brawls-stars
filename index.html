@@ -2,11 +2,28 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Brawl Stars</title>
+  <title>Mini Brawl Stars Mobile</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <canvas id="game" width="800" height="600"></canvas>
+  <div id="menu">
+    <h1>Mini Brawl Stars</h1>
+    <button id="startBtn">Commencer</button>
+  </div>
+  <div id="gameContainer" style="display:none;">
+    <canvas id="game" width="800" height="600"></canvas>
+    <div id="controls">
+      <div class="dpad">
+        <button id="up">▲</button>
+        <div>
+          <button id="left">◀</button>
+          <button id="down">▼</button>
+          <button id="right">▶</button>
+        </div>
+      </div>
+      <button id="shoot">💥</button>
+    </div>
+  </div>
   <script src="game.js"></script>
 </body>
 </html>

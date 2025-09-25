@@ -8,7 +8,6 @@ class Entity {
     this.size = size;
     this.color = color;
     this.speed = 3;
-    this.hp = 3;
   }
   draw() {
     ctx.fillStyle = this.color;
@@ -35,44 +34,75 @@ class Bullet {
   }
 }
 
-// Joueur
+class Obstacle {
+  constructor(x, y, size=40) {
+    this.x = x;
+    this.y = y;
+    this.size = size;
+    this.hp = 3;
+  }
+  draw() {
+    ctx.fillStyle = "#666";
+    ctx.fillRect(this.x, this.y, this.size, this.size);
+  }
+}
+
 const player = new Entity(400, 300, "cyan");
 let lives = 3;
 let score = 0;
-
 const bullets = [];
 const enemies = [];
+const obstacles = [];
 
-// Générer des ennemis
 function spawnEnemy() {
   enemies.push(new Entity(Math.random()*750, Math.random()*550, "red"));
 }
 for (let i = 0; i < 5; i++) spawnEnemy();
 
+// Générer obstacles aléatoires
+for (let i = 0; i < 7; i++) {
+  obstacles.push(new Obstacle(Math.random()*700+20, Math.random()*500+20));
+}
+
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
+// Contrôles tactiles
+function bindButton(id, key) {
+  const btn = document.getElementById(id);
+  btn.addEventListener("touchstart", () => keys[key] = true);
+  btn.addEventListener("touchend", () => keys[key] = false);
+}
+bindButton("up", "ArrowUp");
+bindButton("down", "ArrowDown");
+bindButton("left", "ArrowLeft");
+bindButton("right", "ArrowRight");
+document.getElementById("shoot").addEventListener("touchstart", shoot);
+
 document.addEventListener("keydown", e => {
-  if (e.code === "Space") {
-    bullets.push(new Bullet(player.x+player.size/2, player.y+player.size/2, 0, -6, "yellow"));
-  }
+  if (e.code === "Space") shoot();
 });
 
+function shoot() {
+  bullets.push(new Bullet(player.x+player.size/2, player.y+player.size/2, 0, -6, "yellow"));
+}
+
 function update() {
-  // Déplacement du joueur
+  // Déplacement joueur
   if (keys["ArrowUp"]) player.y -= player.speed;
   if (keys["ArrowDown"]) player.y += player.speed;
   if (keys["ArrowLeft"]) player.x -= player.speed;
   if (keys["ArrowRight"]) player.x += player.speed;
 
-  // Déplacement des balles
+  // Déplacement balles
   bullets.forEach((b, i) => {
     b.update();
-    if (b.y < 0) bullets.splice(i, 1);
+    if (b.y < 0 || b.x < 0 || b.x > canvas.width || b.y > canvas.height)
+      bullets.splice(i, 1);
   });
 
-  // Déplacement des ennemis
+  // Déplacement ennemis
   enemies.forEach(enemy => {
     let dx = player.x - enemy.x;
     let dy = player.y - enemy.y;
@@ -82,7 +112,7 @@ function update() {
       enemy.y += (dy / dist) * 1.5;
     }
 
-    // Collision avec joueur
+    // Collision joueur/ennemi
     if (enemy.x < player.x + player.size &&
         enemy.x + enemy.size > player.x &&
         enemy.y < player.y + player.size &&
@@ -107,6 +137,20 @@ function update() {
       }
     });
   });
+
+  // Collision balles/obstacles
+  bullets.forEach((b, bi) => {
+    obstacles.forEach((obs, oi) => {
+      if (b.x < obs.x + obs.size &&
+          b.x + b.size > obs.x &&
+          b.y < obs.y + obs.size &&
+          b.y + b.size > obs.y) {
+        bullets.splice(bi, 1);
+        obs.hp--;
+        if (obs.hp <= 0) obstacles.splice(oi, 1);
+      }
+    });
+  });
 }
 
 function draw() {
@@ -114,6 +158,7 @@ function draw() {
   player.draw();
   bullets.forEach(b => b.draw());
   enemies.forEach(e => e.draw());
+  obstacles.forEach(o => o.draw());
 
   // HUD
   ctx.fillStyle = "white";
@@ -138,4 +183,10 @@ function loop() {
     draw();
   }
 }
-loop();
+
+// Gestion écran accueil
+document.getElementById("startBtn").addEventListener("click", () => {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("gameContainer").style.display = "block";
+  loop();
+});
